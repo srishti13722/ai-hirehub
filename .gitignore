@@ -1,0 +1,8 @@
+# Go-related
+bin/
+pkg/
+*.exe
+*.log
+
+# Secrets
+.env
