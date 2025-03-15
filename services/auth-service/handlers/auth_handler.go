@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"context"
-	"time"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -64,9 +64,14 @@ func Login( c *fiber.Ctx) error{
 
 	var storedPassword, userID, role string 
 	query := "SELECT id, password, role FROM users WHERE email = $1"
-	err := config.DB.QueryRow(context.Background(), query, loginReq.Email).Scan(&storedPassword, &userID,&role)
+	err := config.DB.QueryRow(context.Background(), query, loginReq.Email).Scan(&userID, &storedPassword,&role)
 	if err != nil{
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error":"Database error"+ err.Error()})
+	}
+
+	// ensure retrieved password is not empty
+	if storedPassword == "" {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Stored password is empty"})
 	}
 
 	//compare password
