@@ -125,6 +125,12 @@ func DeleteJobSeeker(c *fiber.Ctx) error {
 func UploadResume(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 
+	form, err := c.MultipartForm()
+	if err != nil {
+		fmt.Println("Error reading multipart form:", err)
+	}
+	fmt.Println("Multipart form received:", form)
+
 	file, err := c.FormFile("resume")
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No file uploaded"})
@@ -153,5 +159,3 @@ func UploadResume(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "Resume uploaded successfully", "resume_url": filePath})
 }
-
-

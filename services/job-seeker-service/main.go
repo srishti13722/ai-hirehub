@@ -20,7 +20,10 @@ func main() {
 	// Connect DB
 	config.ConnectDataBase()
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit: 20 * 1024 * 1024,
+		StreamRequestBody: true, 
+	})
 
 	// Protected Routes Group (Only job_seekers & admins allowed)
 	jobseekerGroup := app.Group("/jobseeker", middleware.JWTMiddleware())
