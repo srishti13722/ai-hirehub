@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"context"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -40,10 +42,62 @@ func CreateJob(c *fiber.Ctx) error {
 }
 
 func GetJobList(c *fiber.Ctx) error {
-	rows, err := config.DB.Query(context.Background(), `
-		SELECT job_id, recruiter_id, organisation_name, job_title, job_description, job_location, salary, skills_required, vacancy, status, created_at, updated_at
-		FROM jobs WHERE status = 'active'
-	`)
+	location := c.Query("location")
+	skills := c.Query("skills")       
+	minSalary := c.Query("min_salary")
+	maxSalary := c.Query("max_salary")
+	jobTitle := c.Query("job_title")
+	limit := c.Query("limit", "10")
+	offset := c.Query("offset", "0")
+
+	// Base query
+	query := `
+	 SELECT job_id, recruiter_id, organisation_name, job_title, job_description, job_location,
+	 salary, skills_required, vacancy, status, created_at, updated_at
+	 FROM jobs WHERE status = 'active'
+		`
+
+	// Parameters slice
+	params := []any{}
+	paramCounter := 1
+
+	// Dynamically build WHERE conditions
+	if location != "" {
+		query += fmt.Sprintf(" AND job_location ILIKE $%d", paramCounter)
+		params = append(params, "%"+location+"%")
+		paramCounter++
+	}
+
+	if skills != "" {
+		query += fmt.Sprintf(" AND skills_required @> $%d", paramCounter)
+		params = append(params, strings.Split(skills, ","))
+		paramCounter++
+	}
+
+	if minSalary != "" {
+		query += fmt.Sprintf(" AND salary >= $%d", paramCounter)
+		params = append(params, minSalary)
+		paramCounter++
+	}
+
+	if maxSalary != "" {
+		query += fmt.Sprintf(" AND salary <= $%d", paramCounter)
+		params = append(params, maxSalary)
+		paramCounter++
+	}
+
+	if jobTitle != "" {
+		query += fmt.Sprintf(" AND job_title ILIKE $%d", paramCounter)
+		params = append(params, "%"+jobTitle+"%")
+		paramCounter++
+	}
+
+	// Pagination
+	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", paramCounter, paramCounter+1)
+	params = append(params, limit, offset)
+
+	// Execute query
+	rows, err := config.DB.Query(context.Background(), query, params...)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "DB Error: " + err.Error()})
 	}
