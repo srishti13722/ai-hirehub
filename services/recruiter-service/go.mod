@@ -7,7 +7,6 @@ require (
 	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/jackc/pgx/v5 v5.7.2
 	github.com/joho/godotenv v1.5.1
-	github.com/srishti13722/ai-hirehub v0.0.0-20250316160340-1704110a6a85
 )
 
 require (
