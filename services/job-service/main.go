@@ -13,6 +13,7 @@ import (
 func main() {
 	_ = godotenv.Load()
 	config.ConnectDataBase()
+	config.RunMigrations()
 
 	app := fiber.New()
 

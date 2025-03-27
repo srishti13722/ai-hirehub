@@ -5,8 +5,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/srishti13722/ai-hirehub/services/recruiter-service/config"
-	"github.com/srishti13722/ai-hirehub/services/recruiter-service/models"
+	"github.com/srishti13722/ai-hirehub/recruiter-service/config"
+	"github.com/srishti13722/ai-hirehub/recruiter-service/models"
 )
 
 func CreateRecruiter(c *fiber.Ctx) error {

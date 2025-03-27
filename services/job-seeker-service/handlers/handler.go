@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/srishti13722/ai-hirehub/services/job-seeker-service/config"
-	"github.com/srishti13722/ai-hirehub/services/job-seeker-service/models"
+	"github.com/srishti13722/ai-hirehub/job-seeker-service/config"
+	"github.com/srishti13722/ai-hirehub/job-seeker-service/models"
 )
 
 func CreateJobSeeker(c *fiber.Ctx) error {

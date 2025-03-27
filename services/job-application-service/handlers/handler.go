@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"context"
+	"log"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/srishti13722/ai-hirehub/job-application-service/config"
+	"github.com/srishti13722/ai-hirehub/job-application-service/kafka"
 	"github.com/srishti13722/ai-hirehub/job-application-service/models"
 )
 
@@ -40,6 +43,18 @@ func ApplyJob(c *fiber.Ctx) error {
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create job application"})
+	}
+
+	event := models.ApplicationCreatedEvent{
+		ApplicationID: application.ApplicationID,
+		JobID:         application.JobID,
+		RecruiterID:   application.RecruiterID,
+		JobSeekerID:   application.JobSeekerID,
+		AppliedAt:     time.Now(),
+	}
+
+	if err := kafka.Publish("job.application.created", event); err != nil {
+		log.Println("Failed to publish Kafka event:", err)
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{"message": "Job Application Created Successfully",
@@ -154,6 +169,28 @@ func UpdateApplicationStatus(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Application not found OR unauthorized"})
 	}
 
+	// Fetch job_id & jobseeker_id for this application
+	var jobID, jobSeekerID string
+	fetchQuery := `SELECT job_id, jobseeker_id FROM job_applications WHERE application_id = $1`
+	err = config.DB.QueryRow(context.Background(), fetchQuery, applicationID).Scan(&jobID, &jobSeekerID)
+	if err != nil {
+		log.Println("Failed to fetch job or seeker ID for event:", err)
+		return c.JSON(fiber.Map{"message": "Status updated, but failed to notify"})
+	}
+
+	// Prepare and publish Kafka event
+	event := models.ApplicationStatusUpdatedEvent{
+		ApplicationID: applicationID,
+		JobID:         jobID,
+		JobSeekerID:   jobSeekerID,
+		NewStatus:     statusUpdate.Status,
+		UpdatedAt:     time.Now(),
+	}
+
+	if err := kafka.Publish("job.application.status.updated", event); err != nil {
+		log.Println("Failed to publish status update Kafka event:", err)
+	}
+
 	return c.JSON(fiber.Map{"message": "Application status updated"})
 }
 
@@ -182,4 +219,3 @@ func DeleteApplication(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"message": "Application deleted successfully"})
 }
-

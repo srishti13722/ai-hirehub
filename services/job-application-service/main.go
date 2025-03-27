@@ -8,6 +8,7 @@ import (
 
 	"github.com/srishti13722/ai-hirehub/job-application-service/config"
 	"github.com/srishti13722/ai-hirehub/job-application-service/handlers"
+	"github.com/srishti13722/ai-hirehub/job-application-service/kafka"
 	"github.com/srishti13722/ai-hirehub/job-application-service/middleware"
 )
 
@@ -19,6 +20,11 @@ func main() {
 	}
 
 	config.ConnectDataBase()
+	config.RunMigrations()
+
+	//Initialize kafka
+
+	kafka.InitKafkaWriter()
 
 	app := fiber.New()
 

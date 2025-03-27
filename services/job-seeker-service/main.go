@@ -5,9 +5,9 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	"github.com/srishti13722/ai-hirehub/services/job-seeker-service/middleware"
-	"github.com/srishti13722/ai-hirehub/services/job-seeker-service/handlers"
-	"github.com/srishti13722/ai-hirehub/services/job-seeker-service/config"
+	"github.com/srishti13722/ai-hirehub/job-seeker-service/config"
+	"github.com/srishti13722/ai-hirehub/job-seeker-service/handlers"
+	"github.com/srishti13722/ai-hirehub/job-seeker-service/middleware"
 )
 
 func main() {
@@ -19,6 +19,7 @@ func main() {
 
 	// Connect DB
 	config.ConnectDataBase()
+	config.RunMigrations()
 
 	app := fiber.New(fiber.Config{
 		BodyLimit: 20 * 1024 * 1024,

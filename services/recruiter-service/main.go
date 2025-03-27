@@ -5,14 +5,15 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
-	"github.com/srishti13722/ai-hirehub/services/recruiter-service/config"
-	"github.com/srishti13722/ai-hirehub/services/recruiter-service/handlers"
-	"github.com/srishti13722/ai-hirehub/services/recruiter-service/middleware"
+	"github.com/srishti13722/ai-hirehub/recruiter-service/config"
+	"github.com/srishti13722/ai-hirehub/recruiter-service/handlers"
+	"github.com/srishti13722/ai-hirehub/recruiter-service/middleware"
 )
 
 func main() {
 	_ = godotenv.Load()
 	config.ConnectDataBase()
+	config.RunMigrations()
 
 	app := fiber.New()
 
