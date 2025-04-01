@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -43,25 +44,36 @@ func CreateJob(c *fiber.Ctx) error {
 
 func GetJobList(c *fiber.Ctx) error {
 	location := c.Query("location")
-	skills := c.Query("skills")       
+	skills := c.Query("skills")
 	minSalary := c.Query("min_salary")
 	maxSalary := c.Query("max_salary")
 	jobTitle := c.Query("job_title")
 	limit := c.Query("limit", "10")
 	offset := c.Query("offset", "0")
 
-	// Base query
-	query := `
-	 SELECT job_id, recruiter_id, organisation_name, job_title, job_description, job_location,
-	 salary, skills_required, vacancy, status, created_at, updated_at
-	 FROM jobs WHERE status = 'active'
-		`
+	// Build Redis key from all filters
+	cacheKey := fmt.Sprintf("jobs:location=%s|skills=%s|minSalary=%s|maxSalary=%s|title=%s|limit=%s|offset=%s",
+		location, skills, minSalary, maxSalary, jobTitle, limit, offset,
+	)
 
-	// Parameters slice
+	// Try to get from Redis cache
+	if cached, err := config.RedisClient.Get(config.Ctx, cacheKey).Result(); err == nil {
+		var cachedJobs []models.Job
+		if err := json.Unmarshal([]byte(cached), &cachedJobs); err == nil {
+			return c.JSON(fiber.Map{"cached": true, "jobs": cachedJobs})
+		}
+	}
+
+	// Build SQL query
+	query := `
+	SELECT job_id, recruiter_id, organisation_name, job_title, job_description, job_location,
+	salary, skills_required, vacancy, status, created_at, updated_at
+	FROM jobs WHERE status = 'active'
+	`
+
 	params := []any{}
 	paramCounter := 1
 
-	// Dynamically build WHERE conditions
 	if location != "" {
 		query += fmt.Sprintf(" AND job_location ILIKE $%d", paramCounter)
 		params = append(params, "%"+location+"%")
@@ -92,7 +104,6 @@ func GetJobList(c *fiber.Ctx) error {
 		paramCounter++
 	}
 
-	// Pagination
 	query += fmt.Sprintf(" ORDER BY created_at DESC LIMIT $%d OFFSET $%d", paramCounter, paramCounter+1)
 	params = append(params, limit, offset)
 
@@ -127,7 +138,12 @@ func GetJobList(c *fiber.Ctx) error {
 		jobs = append(jobs, job)
 	}
 
-	return c.JSON(jobs)
+	// Save to Redis cache
+	if jobBytes, err := json.Marshal(jobs); err == nil {
+		config.RedisClient.Set(config.Ctx, cacheKey, jobBytes, 60*time.Second)
+	}
+
+	return c.JSON(fiber.Map{"cached": false, "jobs": jobs})
 }
 
 func GetJobDetails(c *fiber.Ctx) error {
