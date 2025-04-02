@@ -17,6 +17,8 @@ func main() {
 	app := fiber.New()
 
 	app.Post("/parse-resume", handler.ParseResume)
+	app.Post("/generate-cover-letter", handler.GenerateCoverLetter)
+	app.Post("/rank-candidates", handler.RankCandidates)
 
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{"status": "AI Service running"})

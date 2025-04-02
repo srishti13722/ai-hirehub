@@ -79,7 +79,7 @@ func RecommendJobs(c *fiber.Ctx) error {
 	resp, err := config.OpenAIClient.CreateChatCompletion(
 		context.Background(),
 		openai.ChatCompletionRequest{
-			Model: openai.GPT3Dot5Turbo,
+			Model: openai.GPT4,
 			Messages: []openai.ChatCompletionMessage{
 				{Role: "user", Content: prompt},
 			},
